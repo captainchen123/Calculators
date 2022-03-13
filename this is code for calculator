@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 const int NUM_BIN_BG=0XFF323232;
 void main() {
   runApp(MyApp());
@@ -28,7 +29,7 @@ class Cal {
   static const TKeys = [
     "C",
     "D",
-    "%",
+    "π",
   ];
 
   static const RKeysMap = {"/": 2, "*": 2, "-": 1, "+":1};
@@ -53,6 +54,9 @@ class Cal {
           return;
         case "D":
           removeLastKey();
+          return;
+        case "π":
+           print(1); 
           return;
       }
     }
@@ -137,9 +141,8 @@ class Cal {
               double r1 = _s3.removeLast(), r2 = _s3.removeLast();
               _s3.add(r2 / r1);
               break;
-            case "%":
-              double r1 = _s3.removeLast(), r2 = _s3.removeLast();
-              _s3.add(r2 % r1);
+           case "π":
+               _s3.add(3.14);
               break;
           }
         }
@@ -205,13 +208,14 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: IndexPage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
 
 class IndexPage extends StatefulWidget {
   static const NKeys = [
-    "C", "D", "%", "/", //
+    "C", "D", "π", "/", //
     "9", "8", "7", "*", //
     "6", "5", "4", "-", //
     "3", "2", "1", "+", //
@@ -220,7 +224,7 @@ class IndexPage extends StatefulWidget {
 
   //自定义按钮颜色
   static const TKeys = [
-    "C", "D", "%", //
+    "C", "D", "π", //
   ];
   static const RKeys = [
     "/", "*", "-", "+", "=" //
@@ -267,9 +271,37 @@ class _IndexPageState extends State<IndexPage> {
   Widget build(BuildContext context) {
     // TODO: implement build
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: IndexPage.PAGE_COLOR,
       appBar: AppBar(
-        title: Text("计算器"),
+        elevation: 0,
+        leading: IconButton(
+        icon:Icon(
+        Icons.menu,
+        semanticLabel: 'menu', color:  IndexPage.kShrineAltYellow,), onPressed: (){ print('Menu button');}),
+        title: Text("Captain Calculator"),
+        actions: <Widget>[
+  IconButton(
+    icon: Icon(
+      Icons.search ,
+      semanticLabel: 'delete',
+      color: IndexPage.kShrineAltYellow,
+    ),
+    onPressed: () {
+      print('Delete button');
+    },
+  ),
+  IconButton(
+    icon: Icon(
+      Icons.tune,
+      semanticLabel: 'filter',
+      color: IndexPage.kShrineAltYellow,
+    ),
+    onPressed: () {
+      print('Filter button');
+    },
+  ),
+],
         backgroundColor: IndexPage.PAGE_COLOR,
         centerTitle: true,
       ),
