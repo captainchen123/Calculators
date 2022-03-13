@@ -1,13 +1,195 @@
 import 'package:flutter/material.dart';
-
 const int NUM_BIN_BG=0XFF323232;
 void main() {
   runApp(MyApp());
 }
 
 
+class Cal {
+  String _output = "";
 
+  String _curnum = "";
 
+  double result = 0.0;
+
+  String get OutPut => this._output;
+
+  List<String> _s1 = [], _s2 = [];
+  List<double> _s3 = [];
+
+  static const NKeys = [
+    "9", "8", "7", //,
+    "6", "5", "4", //
+    "3", "2", "1", //
+    "0", ".", //
+  ];
+
+//顶部按钮
+  static const TKeys = [
+    "C",
+    "D",
+    "?",
+  ];
+
+  static const RKeysMap = {"/": 2, "*": 2, "-": 1, "+":1};
+
+  List<String> _keys = [];
+
+//右侧按钮
+  static const RKeys = ["/", "*", "-", "+"];
+
+  static const EQ = "=";
+
+  void addKey(String key) {
+    if (TKeys.contains(key)) {
+      switch (key) {
+        case "C":
+          _s1 = [];
+          _s2 = [];
+          _s3 = [];
+          _curnum = "";
+          _output = "";
+          _keys = [];
+          return;
+        case "D":
+          removeLastKey();
+          return;
+      }
+    }
+    String prekey = "";
+    if (_keys.length > 0) {
+      prekey = _keys[_keys.length - 1];
+    }
+    //1 +1 +2 +3
+    //处理数字到 _s1
+    if (NKeys.contains(key)) {
+      if (_curnum.isEmpty && _s1.isEmpty) {
+        _output = "";
+      }
+      _output += key;
+      _curnum += key;
+      _keys.add(key);
+    } else {
+      if (_curnum.isNotEmpty) {
+        _s1.add(_curnum);
+        _curnum = "";
+      }
+    }
+
+    //处理符号
+    if (RKeys.contains(key)) {
+      if (_s1.length == 0) {
+        String rs = result.toString();
+        _output = rs;
+        for (int i = 0; i < rs.length; i++) {
+          _keys.add(rs.substring(i, i + 1));
+        }
+        _s1.add(rs);
+      }
+      if (RKeys.contains(prekey)) {
+        removeLastKey();
+      }
+      _keys.add(key);
+      _output += key;
+      if (_s2.length == 0) {
+        _s2.add(key);
+      } else {
+        // 当前运算符优先级 小于或等于 _s2最末尾的运算符的优先级，
+        // 我需要将s2的运算符依次从末尾取出，放入_s1
+        String lastkey = _s2[_s2.length - 1];
+        if ((RKeysMap[key]?? 0) <= (RKeysMap[lastkey] ?? 0)) {
+          while (_s2.length > 0 &&
+             (RKeysMap[key]?? 0) <= (RKeysMap[_s2[_s2.length - 1]] ?? 0)) {
+            _s1.add(_s2.removeLast());
+          }
+        }
+        _s2.add(key);
+      }
+    }
+
+    if (EQ == key && (_s1.length > 0 || _curnum.isNotEmpty) && prekey != EQ) {
+      if (RKeys.contains(prekey)) {
+        removeLastKey();
+      }
+      _keys.add(key);
+      _output += key;
+      while (_s2.length > 0) {
+        _s1.add(_s2.removeLast());
+      }
+      // 1 1 + 2+ 3 + 4 +
+      for (int i = 0; i < _s1.length; i++) {
+        String k = _s1[i];
+        if (!RKeys.contains(k)) {
+          _s3.add(double.parse(k));
+        } else {
+          switch (k) {
+            case "+":
+              _s3.add(_s3.removeLast() + _s3.removeLast());
+              break;
+            case "*":
+              _s3.add(_s3.removeLast() * _s3.removeLast());
+              break;
+            case "-":
+              double r1 = _s3.removeLast(), r2 = _s3.removeLast();
+              _s3.add(r2 - r1);
+              break;
+            case "/":
+              double r1 = _s3.removeLast(), r2 = _s3.removeLast();
+              _s3.add(r2 / r1);
+              break;
+          }
+        }
+      }
+
+      result = _s3[0];
+      _output += "$result";
+      _s3 = [];
+      _s2 = [];
+      _s1 = [];
+      _keys = [];
+    }
+  }
+
+  void removeLastKey() {
+    String prekey = "";
+    if (_keys.length > 0) {
+      prekey = _keys[_keys.length - 1];
+    }
+    print(_s1);
+    print(_s2);
+    if (RKeys.contains(prekey)) {
+
+      String k1 = _s1[_s1.length - 1];
+      if (RKeys.contains(k1)) {
+        _s2.removeLast();
+        for (int i = _s1.length - 1; i >= 0; i--) {
+          String tk = _s1[i];
+          if (RKeys.contains(tk)) {
+            _s2.add(_s1.removeLast());
+          } else {
+            break;
+          }
+        }
+      } else {
+        _s2.removeLast();
+      }
+      _output = _output.substring(0, _output.length - 1);
+      _keys.removeLast();
+    } else if (_s1.length > 0 || _curnum.isNotEmpty) {
+      if (_curnum.isNotEmpty) {
+        _curnum = _curnum.substring(0, _curnum.length - 1);
+      } else {
+        String tk = _s1.removeLast();
+        tk = tk.substring(0, tk.length - 1);
+        if (tk.isNotEmpty) {
+          _s1.add(tk);
+        }
+      }
+      _output = _output.substring(0, _output.length - 1);
+      _keys.removeLast();
+    }
+  }
+}
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
@@ -23,15 +205,23 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class IndexPage extends StatelessWidget {
-  static const Nkeys=[
-    'C','÷','×','.',
-    '7','8','9','-',
-    '4','5','6','+',
-    '1','2','3','π',
-    "%",'0',' ','=',
+class IndexPage extends StatefulWidget {
+  static const NKeys = [
+    "C", "D", "?", "÷", //
+    "9", "8", "7", "×", //
+    "6", "5", "4", "-", //
+    "3", "2", "1", "+", //
+    "", "0", ".", "=" //
   ];
-  //按钮背景颜色
+
+  //自定义按钮颜色
+  static const TKeys = [
+    "C", "D", "?", //
+  ];
+  static const RKeys = [
+    "÷", "×", "-", "+", "=" //
+  ];
+//按钮背景颜色
   static const  Color NUM_BTN_BG=Color(0xff323232);
   //页面背景颜色
   static const Color PAGE_COLOR=Color(0xFFf799B0);
@@ -44,115 +234,133 @@ class IndexPage extends StatelessWidget {
   //顶部按钮
   static const kShrineAltYellow = Color(0xFFFFCF44);
   // 顶部按钮颜色
-  static const Tkey=[
-    'C','÷','×','.',
-  ];
-  //右侧按钮
-  static const Rkey=[
-    '<','-','+',"π",'='
-  ];
+  static const Input_bar = Color(0xFF9AC8E2);
+  @override
+  _IndexPageState createState() => _IndexPageState();
+}
+
+class _IndexPageState extends State<IndexPage> {
+  String _num = "";
+  Cal _cal = new Cal();
+
+   
+  //获取点击的数值
+  void clickKey(String key) {
+    // if ("C".compareTo(key) == 0) {
+    //   _num="";
+    //   key="";
+    // }
+    // setState(() {
+    //   _num+=key;
+    // });
+     _cal.addKey(key);
+    setState(() {
+      _num =  _cal.OutPut;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      backgroundColor: PAGE_COLOR,
+      backgroundColor: IndexPage.PAGE_COLOR,
       appBar: AppBar(
-        elevation: 0,
-        leading: IconButton(
-        icon:Icon(
-        Icons.menu,
-        semanticLabel: 'menu', color: kShrineAltYellow,), onPressed: (){ print('Menu button');}),
-        title: Text("Captain Calculator"),
-        actions: <Widget>[
-  IconButton(
-    icon: Icon(
-      Icons.search ,
-      semanticLabel: 'delete',
-      color: kShrineAltYellow,
-    ),
-    onPressed: () {
-      print('Delete button');
-    },
-  ),
-  IconButton(
-    icon: Icon(
-      Icons.tune,
-      semanticLabel: 'filter',
-      color: kShrineAltYellow,
-    ),
-    onPressed: () {
-      print('Filter button');
-    },
-  ),
-],
-        backgroundColor: Top_Tabbar,
+        title: Text("计算器"),
+        backgroundColor: IndexPage.PAGE_COLOR,
         centerTitle: true,
       ),
       body: Padding(
-        //设置按钮的边距，不紧挨着最下面
-        padding: const EdgeInsets.all(10.0),
-        child: Container(child: Column(children: <Widget>[
-          //Expanded用来指定元素填充页面
-          
-          Expanded(child: Center(child: Text("Output"),)),
-          //row组件实现按钮布局，row组件是按列排序的
-          
-          Container(
-              child: Center(
-                  child: _buildBtns()))
-          
-        ],
-        ),),
+        //按钮不紧贴边框
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          child: Column(
+            children: <Widget>[
+              Expanded(
+                  flex: 1,
+                  //显示页面可以滚动
+                  child: SingleChildScrollView(
+                    //显示内容从下到上
+                    reverse: true,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        //内容显示的位置 垂直和水平
+                          horizontal: 20.0,
+                          vertical: 10.0),
+                      child: Align(
+                          alignment: Alignment.bottomRight,
+                          child: Text(
+                            "$_num",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 32.0,
+                            ),
+                          )),
+                    ),
+                  )),
+              Container(child: _builBtns()),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget buildFlatButton(String num, {int flex = 1}) {
-    //Expande使按钮在整行进行分布，而不是靠左分布
     return Expanded(
-      
-      //flex按钮的尺寸
+      // 定义flex比例 1:2
       flex: flex,
-      //FlatButton是透明背景的按钮组件，可以使用FlatButton包裹Container来实现圆形按钮。
       child: FlatButton(
-          onPressed: null, //点击按钮触发的方法
-          padding: EdgeInsets.all(10.0),
-          child: Container(
-            //设置按钮的颜色
-            decoration: BoxDecoration(
-              //给各个按钮分配颜色
-                color: Tkey.contains(num)?TOP_BTN_BG:Rkey.contains(num)?Right_BTN_BG:NUM_BTN_BG,
-                //判断flex是否>1，如果是就把按钮形状修改为矩形否则就为圆形
-                shape: flex > 1 ? BoxShape.rectangle : BoxShape.circle,
-                //把矩形的边角修饰圆一些
-                borderRadius: flex > 1 ? BorderRadius.all(Radius.circular(90)) : null
+        //点击按钮
+        onPressed: () {
+          clickKey(num);
+        },
+        padding: EdgeInsets.all(0.0),
+        child: Container(
+          decoration: BoxDecoration(
+            //显示按钮颜色
+            color: IndexPage.TKeys.contains(num)
+                ? IndexPage.TOP_BTN_BG
+                : IndexPage.RKeys.contains(num)
+                ? IndexPage.TOP_BTN_BG
+                : IndexPage.NUM_BTN_BG,
+            //用flex的参数判断按钮是否为矩形还是原形
+            shape: flex > 1 ? BoxShape.rectangle : BoxShape.circle,
+            //修改边角弧度
+            borderRadius:
+            flex > 1 ? BorderRadius.all(Radius.circular(1000.0)) : null,
+          ),
+          padding: EdgeInsets.all(20.0),
+          //改变布局间距
+          margin: EdgeInsets.all(10.0),
+          child: Center(
+            child: Text(
+              "$num",
+              style: TextStyle(fontSize: 28.0, color: Colors.white),
             ),
-            //设置字体的大小
-            padding: EdgeInsets.all(25),
-            //'$num'显示按钮的值
-            child: Center(child: Text(
-                '$num', style: TextStyle(fontSize: 30, color: Colors.white))),
-          )
+          ),
+        ),
       ),
     );
   }
-  Widget _buildBtns() {
+
+  Widget _builBtns() {
     List<Widget> rows = [];
+
     List<Widget> btns = [];
-    int flex=1;
-    for (int i = 0; i < Nkeys.length; i++) {
-      String key = Nkeys[i];
-      if(key==" "){
+
+    int flex = 1;
+    for (int i = 0; i < IndexPage.NKeys.length; i++) {
+      String key = IndexPage.NKeys[i];
+      if (key.isEmpty) {
         flex++;
         continue;
-      }else{
-        Widget b = buildFlatButton(key,flex:flex);
+      } else {
+        Widget b = buildFlatButton(key, flex: flex);
         btns.add(b);
-        flex=1;
+        flex = 1;
       }
 
-      //四个按钮为一行
+      //显示按钮
       if ((i + 1) % 4 == 0) {
         rows.add(Row(
           children: btns,
@@ -160,19 +368,18 @@ class IndexPage extends StatelessWidget {
         btns = [];
       }
     }
-    //当不足三个时候，也就是最后一行
-    if(btns.length>0)
-    {
+    //判断显示最后一行的三个按钮
+    if (btns.length > 0) {
       rows.add(Row(
         children: btns,
       ));
+      btns = [];
     }
-
-
     return Column(
       children: rows,
-
     );
   }
- 
 }
+
+
+ 
