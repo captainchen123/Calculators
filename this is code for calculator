@@ -1,0 +1,139 @@
+import 'package:flutter/material.dart';
+const int NUM_BIN_BG=0XFF323232;
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: IndexPage(),
+    );
+  }
+}
+
+class IndexPage extends StatelessWidget {
+  static const Nkeys=[
+    'C','÷','×','←',
+    '7','8','9','-',
+    '4','5','6','+',
+    '1','2','3','π',
+    "%",'0',' ','=',
+  ];
+  //按钮背景颜色
+  static const  Color NUM_BTN_BG=Color(0xff323232);
+  //页面背景颜色
+  static const Color PAGE_COLOR=Colors.black;
+  //顶部按钮颜色
+  static const Color TOP_BTN_BG=Color(0xFFa6a6a6);
+
+  //右侧按钮颜色
+  static const Color Right_BTN_BG=Color(0xFFff9500);
+
+  //顶部按钮
+  static const Tkey=[
+    'C','÷','×','←',
+  ];
+  //右侧按钮
+  static const Rkey=[
+    '<','-','+',"π",'='
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return Scaffold(
+      backgroundColor: PAGE_COLOR,
+      appBar: AppBar(
+        title: Text("Captain Calculator"),
+        backgroundColor: PAGE_COLOR,
+        centerTitle: true,
+      ),
+      body: Padding(
+        //设置按钮的边距，不紧挨着最下面
+        padding: const EdgeInsets.all(8.0),
+        child: Container(child: Column(children: <Widget>[
+          //Expanded用来指定元素填充页面
+          Expanded(child: Center(child: Text("Output"),)),
+          //row组件实现按钮布局，row组件是按列排序的
+          Container(
+              child: Center(
+                  child: _buildBtns()))
+        ],
+        ),),
+      ),
+    );
+  }
+
+  Widget buildFlatButton(String num, {int flex = 1}) {
+    //Expande使按钮在整行进行分布，而不是靠左分布
+    return Expanded(
+      //flex按钮的尺寸
+      flex: flex,
+      //FlatButton是透明背景的按钮组件，可以使用FlatButton包裹Container来实现圆形按钮。
+      child: FlatButton(
+          onPressed: null, //点击按钮触发的方法
+          child: Container(
+            //设置按钮的颜色
+            decoration: BoxDecoration(
+              //给各个按钮分配颜色
+                color: Tkey.contains(num)?TOP_BTN_BG:Rkey.contains(num)?Right_BTN_BG:NUM_BTN_BG,
+                //判断flex是否>1，如果是就把按钮形状修改为矩形否则就为圆形
+                shape: flex > 1 ? BoxShape.rectangle : BoxShape.circle,
+                //把矩形的边角修饰圆一些
+                borderRadius: flex > 1 ? BorderRadius.all(Radius.circular(90)) : null
+            ),
+            //设置字体的大小
+            padding: EdgeInsets.all(35),
+            //'$num'显示按钮的值
+            child: Center(child: Text(
+                '$num', style: TextStyle(fontSize: 30, color: Colors.white))),
+          )
+      ),
+    );
+  }
+  Widget _buildBtns() {
+    List<Widget> rows = [];
+    List<Widget> btns = [];
+    int flex=1;
+    for (int i = 0; i < Nkeys.length; i++) {
+      String key = Nkeys[i];
+      if(key==" "){
+        flex++;
+        continue;
+      }else{
+        Widget b = buildFlatButton(key,flex:flex);
+        btns.add(b);
+        flex=1;
+      }
+
+      //四个按钮为一行
+      if ((i + 1) % 4 == 0) {
+        rows.add(Row(
+          children: btns,
+        ));
+        btns = [];
+      }
+    }
+    //当不足三个时候，也就是最后一行
+    if(btns.length>0)
+    {
+      rows.add(Row(
+        children: btns,
+      ));
+    }
+
+
+    return Column(
+      children: rows,
+
+    );
+  }
+}
